@@ -1,80 +1,229 @@
 # AI-Assisted Debugging Evaluation Framework
 
-A reproducible Python portfolio project comparing three approaches to diagnosing **synthetic application logs**:
+A Python-based experimental framework for comparing different approaches to diagnosing synthetic application logs using local large language models (LLMs).
 
-1. **Structured-context LLM** — Python extracts likely evidence and sends a structured log bundle to a local LLM.
-2. **Tool-assisted LLM** — the LLM can call one bounded, read-only Python inspection tool, then must return a final diagnosis.
-3. **Rule-based baseline** — transparent keyword rules provide a non-LLM reference point.
+The project evaluates whether providing structured diagnostic context or allowing bounded tool-assisted investigation changes diagnostic accuracy, completeness, and execution performance.
 
-The dataset contains 15 synthetic cases balanced across five root-cause classes (three cases per class). The evaluator reports exact-match accuracy, completeness, mean/median/p95 latency, Ollama token counters, tool calls, parse failures, and execution failures.
+## Overview
 
-> Educational simulation only. It is not connected to Apple systems, cellular baseband firmware, real device coredumps, or production debugging infrastructure.
+The framework compares three diagnostic strategies:
+
+1. **Structured-context LLM** — Python extracts relevant evidence from the supplied logs and provides the LLM with a structured diagnostic context.
+2. **Tool-assisted LLM** — The LLM can request information through a bounded, read-only Python inspection tool before producing its final diagnosis.
+3. **Rule-based baseline** — Transparent keyword-matching rules provide a deterministic, non-LLM comparison.
+
+The evaluation dataset contains **15 synthetic debugging cases**, balanced across five root-cause categories, with three cases per category.
+
+The evaluator collects diagnostic results and performance measurements to support repeatable comparisons.
+
+## Key Features
+
+- Three interchangeable diagnostic strategies.
+- Local LLM inference through Ollama.
+- Bounded, read-only log inspection for tool-assisted diagnosis.
+- Synthetic dataset with predefined expected root-cause labels.
+- Exact-match diagnostic accuracy and output completeness evaluation.
+- Mean, median, and p95 latency measurements.
+- Ollama prompt and completion token counters.
+- Tool-call, parsing-failure, and execution-failure tracking.
+- JSON, CSV, and Markdown evaluation reports.
+- Offline unit tests for core functionality.
+
+## Technology Stack
+
+| Component | Technology |
+|---|---|
+| Programming language | Python 3.10+ |
+| LLM runtime | Ollama |
+| Evaluation model | Llama 3.2 (3B recommended) |
+| Smaller model option | Llama 3.2 (1B) |
+| Diagnostic approaches | LLM prompting, tool calling, keyword rules |
+| Testing | Python unittest |
+| Reporting | JSON, CSV, Markdown |
+
+The implementation uses the Python standard library without additional Python package dependencies.
+
+## Architecture
+
+The evaluation process follows this general workflow:
+
+1. Load a synthetic diagnostic case and its expected root-cause label.
+2. Execute the selected diagnostic strategy.
+3. Collect the predicted diagnosis, explanation, and recommended action.
+4. Measure execution time and available model usage information.
+5. Compare the predicted diagnosis with the expected label.
+6. Store the results for analysis and reporting.
+
+### Strategy comparison
+
+| Strategy | Diagnostic approach | Purpose |
+|---|---|---|
+| Structured-context LLM | Pre-extracted evidence supplied to an LLM | Evaluate structured diagnostic context |
+| Tool-assisted LLM | LLM investigates logs using a bounded inspection tool | Evaluate interactive evidence gathering |
+| Rule-based baseline | Keyword-based diagnostic rules | Establish a deterministic reference |
 
 ## Requirements
-- Python 3.10+
-- Ollama installed and running
-- Recommended model for this project: `llama3.2:3b` (may be slow or memory-constrained on 8 GB machines; `llama3.2:1b` remains available for comparison)
-- Python standard library only
 
-## Quick start (macOS)
+- Python 3.10 or newer
+- Ollama installed and running
+- Llama 3.2 model
+
+The recommended model is `llama3.2:3b`. On memory-constrained machines, `llama3.2:1b` can be used for comparison.
+
+## Getting Started
+
+### 1. Clone the repository
+
 ```bash
-ollama pull llama3.2:3b
-# Ollama normally runs as a background app; if not, start it in a separate terminal:
-ollama serve
+git clone https://github.com/Sochjvmbcht/ai-assisted-debugging-evaluation-2.git
+cd ai-assisted-debugging-evaluation-2
+```
+
+### 2. Set up the Python environment
+
+```bash
 python3 -m venv .venv
 source .venv/bin/activate
+```
+
+### 3. Install and start Ollama
+
+Download the recommended model:
+
+```bash
+ollama pull llama3.2:3b
+```
+
+Ollama normally runs in the background. If it is not already running, start it in a separate terminal:
+
+```bash
+ollama serve
+```
+
+### 4. Run the unit tests
+
+```bash
 python -m unittest discover -s tests -v
+```
+
+### 5. Run the complete evaluation
+
+```bash
 python -m debugging_eval --strategy all --model llama3.2:3b --timeout 60
 ```
 
-To use the smaller model on a memory-constrained machine:
+## Running Individual Strategies
+
+Run only the structured-context strategy:
+
 ```bash
-python -m debugging_eval --strategy all --model llama3.2:1b --timeout 60
+python -m debugging_eval --strategy structured
 ```
 
-Run each strategy twice per case (slower):
+Run only the tool-assisted strategy:
+
 ```bash
-python -m debugging_eval --strategy all --model llama3.2:3b --repeats 2
+python -m debugging_eval --strategy tool_assisted
 ```
 
-Run only the no-LLM baseline without Ollama:
+Run the rule-based baseline without Ollama:
+
 ```bash
 python -m debugging_eval --strategy rule_based
 ```
 
-The tool-assisted strategy is deliberately bounded to one tool call by default. Use `--max-tool-calls 0` to disable tool calls or `2` to allow up to two. Each Ollama request has a 60-second default timeout. The final tool-assisted turn disables tools so the model must provide a diagnosis instead of looping.
+Use the smaller model:
 
-## Outputs
-- `reports/latest.json` — per-case diagnoses and run metadata
-- `reports/latest.csv` — analysis-friendly rows
-- `reports/summary.md` — comparison summary
-
-## Evaluation definitions
-- **Accuracy:** exact match between normalized predicted label and expected synthetic label.
-- **Completeness:** non-UNKNOWN root cause, non-empty explanation, and at least one recommended action.
-- **Latency:** wall-clock time for the strategy, including tool calls.
-- **Tokens:** prompt and completion counts returned by Ollama.
-- **P95:** nearest-rank 95th percentile of observed run latencies.
-- **Rule baseline:** simple keyword matching; transparent and intentionally not an ML model.
-
-## Project structure
-```text
-ai-assisted-debugging-evaluation/
-├── debugging_eval/  # CLI, Ollama client, prompts, strategies, evaluator
-├── data/            # 15 balanced synthetic log cases
-├── reports/         # generated JSON, CSV and Markdown reports
-└── tests/           # offline unit tests
+```bash
+python -m debugging_eval --strategy all --model llama3.2:1b --timeout 60
 ```
 
-## Limitations and responsible reporting
-- Logs are synthetic; results cannot be generalized to production debugging or baseband systems.
-- The dataset is small and hand-authored. Treat results as a portfolio experiment, not a benchmark.
-- A keyword baseline can match obvious patterns and is not equivalent to a production diagnostic engine.
-- LLM accuracy must be judged from actual runs. Do not claim a target accuracy or copy unexecuted metrics into a CV.
-- The tools only inspect the supplied in-memory log text. They do not execute shell commands or access real devices.
+Repeat each strategy twice per case:
 
-## CV wording (only after implementation and testing)
-**AI-Assisted Debugging Evaluation Framework | Python, Ollama, LLM Tool Calling**
-- Developed a Python evaluation harness comparing structured-context and bounded tool-assisted LLM workflows against a transparent rule-based baseline on 15 synthetic debugging cases.
-- Implemented read-only log inspection tools and automated reporting for root-cause accuracy, response latency, token usage, and output completeness.
-- Generated reproducible JSON/CSV evaluation reports and analyzed per-case failures across five error categories.
+```bash
+python -m debugging_eval --strategy all --model llama3.2:3b --repeats 2
+```
+
+### Tool-call configuration
+
+The tool-assisted strategy allows one tool call by default.
+
+You can configure the maximum number of tool calls:
+
+```bash
+python -m debugging_eval --strategy tool_assisted --max-tool-calls 0
+```
+
+```bash
+python -m debugging_eval --strategy tool_assisted --max-tool-calls 2
+```
+
+The final tool-assisted interaction disables further tool calls so the model must return a diagnosis rather than continue investigating indefinitely.
+
+## Evaluation Metrics
+
+The framework reports the following measurements:
+
+| Metric | Definition |
+|---|---|
+| Accuracy | Exact match between the normalized predicted and expected root-cause labels |
+| Completeness | A non-UNKNOWN root cause, a non-empty explanation, and at least one recommended action |
+| Mean latency | Average execution time across evaluated cases |
+| Median latency | Middle observed execution time |
+| P95 latency | Nearest-rank 95th percentile of observed execution times |
+| Token usage | Prompt and completion token counters returned by Ollama |
+| Tool calls | Number of inspection-tool calls made during diagnosis |
+| Parse failures | Responses that cannot be parsed into the expected output format |
+| Execution failures | Cases where strategy execution fails |
+
+Latency includes the time spent on tool interactions.
+
+## Generated Reports
+
+After an evaluation, the framework generates:
+
+```text
+reports/
+├── latest.json
+├── latest.csv
+└── summary.md
+```
+
+- **latest.json** — Per-case diagnoses and evaluation metadata.
+- **latest.csv** — Structured results for further analysis.
+- **summary.md** — Summary comparing the evaluated strategies.
+
+## Project Structure
+
+```text
+ai-assisted-debugging-evaluation-2/
+├── debugging_eval/   # CLI, Ollama client, prompts, strategies and evaluator
+├── data/             # Synthetic diagnostic cases
+├── reports/          # Generated evaluation reports
+├── tests/            # Offline unit tests
+├── .gitignore
+├── LICENSE
+└── README.md
+```
+
+## Limitations
+
+- The dataset contains only 15 hand-authored synthetic cases.
+- Synthetic application logs do not represent real production debugging data.
+- Results cannot be generalized to cellular baseband firmware, device coredumps, or embedded systems.
+- The keyword-based baseline is intentionally simple and is not a production diagnostic engine.
+- LLM results may vary between runs and model versions.
+- Performance measurements depend on the local machine, model, and runtime configuration.
+- The inspection tools only examine supplied in-memory log text. They do not execute shell commands or access real devices.
+
+This project is an educational experiment in LLM-assisted diagnostic workflows and evaluation methodology.
+
+## Responsible Interpretation
+
+Results should be interpreted only within the scope of this synthetic dataset. Accuracy on these cases does not establish reliability on real-world debugging tasks.
+
+The purpose is to compare approaches, examine their trade-offs, and provide a reproducible foundation for further experimentation.
+
+---
+
+**Note:** This is an independent educational simulation. It is not affiliated with Apple and does not use Apple systems, cellular baseband firmware, real device coredumps, or production debugging infrastructure.
