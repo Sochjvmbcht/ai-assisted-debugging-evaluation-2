@@ -1,0 +1,107 @@
+[
+  {
+    "case_id": "DBG-001",
+    "title": "Database connection pool exhaustion",
+    "category": "DATABASE_CONNECTION_POOL_EXHAUSTED",
+    "expected_root_cause": "DATABASE_CONNECTION_POOL_EXHAUSTED",
+    "logs": "2026-10-30T10:14:01Z INFO service=orders event=request_received request_id=ord-71\n2026-10-30T10:14:02Z WARN service=orders db_pool active=40 max=40\n2026-10-30T10:14:03Z ERROR service=orders message=\"connection pool exhausted\"\n2026-10-30T10:14:03Z ERROR exception=TimeoutError waiting_for_database_connection"
+  },
+  {
+    "case_id": "DBG-002",
+    "title": "Database pool wait queue saturated",
+    "category": "DATABASE_CONNECTION_POOL_EXHAUSTED",
+    "expected_root_cause": "DATABASE_CONNECTION_POOL_EXHAUSTED",
+    "logs": "INFO service=billing db_pool active=32 max=32 waiters=118\nWARN service=billing acquire_wait_ms=3000\nERROR service=billing message=\"no database connection available\"\nERROR service=billing exception=PoolAcquireTimeout"
+  },
+  {
+    "case_id": "DBG-003",
+    "title": "Database connections not returned",
+    "category": "DATABASE_CONNECTION_POOL_EXHAUSTED",
+    "expected_root_cause": "DATABASE_CONNECTION_POOL_EXHAUSTED",
+    "logs": "INFO service=inventory db_pool max=20 active=20 idle=0\nWARN service=inventory long_running_transactions=17\nERROR service=inventory message=\"connection pool exhausted\"\nERROR service=inventory acquire_connection deadline exceeded"
+  },
+  {
+    "case_id": "DBG-004",
+    "title": "Upstream network request timeout",
+    "category": "NETWORK_TIMEOUT",
+    "expected_root_cause": "NETWORK_TIMEOUT",
+    "logs": "INFO service=profile event=fetch_started host=profile-api.internal\nWARN service=profile upstream_latency_ms=5000\nERROR service=profile exception=ReadTimeout message=\"upstream request timed out\"\nERROR service=profile retry_count=2"
+  },
+  {
+    "case_id": "DBG-005",
+    "title": "DNS lookup timed out",
+    "category": "NETWORK_TIMEOUT",
+    "expected_root_cause": "NETWORK_TIMEOUT",
+    "logs": "INFO service=checkout resolving_host=pricing.internal\nWARN service=checkout dns_query_duration_ms=8000\nERROR service=checkout exception=socket.timeout message=\"DNS lookup timed out\"\nERROR service=checkout request_aborted=true"
+  },
+  {
+    "case_id": "DBG-006",
+    "title": "Connection reset by remote service",
+    "category": "NETWORK_TIMEOUT",
+    "expected_root_cause": "NETWORK_TIMEOUT",
+    "logs": "INFO service=shipping connect host=carrier.internal\nWARN service=shipping retry_attempt=3\nERROR service=shipping exception=ConnectionResetError\nERROR service=shipping message=\"connection reset by peer\""
+  },
+  {
+    "case_id": "DBG-007",
+    "title": "Null reference in checkout",
+    "category": "NULL_REFERENCE",
+    "expected_root_cause": "NULL_REFERENCE",
+    "logs": "INFO service=checkout event=cart_loaded cart_id=cart-18\nINFO service=checkout item_count=2\nERROR service=checkout exception=AttributeError message=\"NoneType object has no attribute price\"\nERROR service=checkout stack=\"checkout.py line 84: total += item.price\""
+  },
+  {
+    "case_id": "DBG-008",
+    "title": "Missing user profile object",
+    "category": "NULL_REFERENCE",
+    "expected_root_cause": "NULL_REFERENCE",
+    "logs": "INFO service=accounts user_id=u-88 profile_lookup=completed\nWARN service=accounts profile_result=null\nERROR service=accounts exception=NullReferenceException\nERROR service=accounts message=\"object reference not set to an instance of an object\""
+  },
+  {
+    "case_id": "DBG-009",
+    "title": "Null configuration value",
+    "category": "NULL_REFERENCE",
+    "expected_root_cause": "NULL_REFERENCE",
+    "logs": "INFO service=mailer template_loaded=true\nINFO service=mailer sender_address=null\nERROR service=mailer exception=TypeError\nERROR service=mailer message=\"cannot read property length of null\""
+  },
+  {
+    "case_id": "DBG-010",
+    "title": "Memory limit exceeded",
+    "category": "OUT_OF_MEMORY",
+    "expected_root_cause": "OUT_OF_MEMORY",
+    "logs": "INFO service=report-worker job=monthly-export started\nWARN service=report-worker memory_mb=1960 limit_mb=2048\nERROR service=report-worker exception=MemoryError message=\"unable to allocate buffer\"\nFATAL service=report-worker process_terminated signal=9"
+  },
+  {
+    "case_id": "DBG-011",
+    "title": "Heap allocation failure",
+    "category": "OUT_OF_MEMORY",
+    "expected_root_cause": "OUT_OF_MEMORY",
+    "logs": "INFO service=image-worker batch_size=5000\nWARN service=image-worker heap_used_mb=3900 heap_limit_mb=4096\nERROR service=image-worker exception=OutOfMemoryError\nFATAL service=image-worker message=\"Java heap space\""
+  },
+  {
+    "case_id": "DBG-012",
+    "title": "Container killed by memory limit",
+    "category": "OUT_OF_MEMORY",
+    "expected_root_cause": "OUT_OF_MEMORY",
+    "logs": "INFO service=analytics memory_current=2040MiB memory_limit=2048MiB\nWARN service=analytics memory_pressure=critical\nFATAL service=analytics reason=OOMKilled exit_code=137\nINFO service=orchestrator restart_count=1"
+  },
+  {
+    "case_id": "DBG-013",
+    "title": "Expired service credentials",
+    "category": "AUTHENTICATION_FAILURE",
+    "expected_root_cause": "AUTHENTICATION_FAILURE",
+    "logs": "INFO service=payments event=token_refresh_started\nWARN service=payments credential_status=expired\nERROR service=payments exception=HTTPError status=401\nERROR service=payments message=\"invalid or expired access token\""
+  },
+  {
+    "case_id": "DBG-014",
+    "title": "Invalid API key",
+    "category": "AUTHENTICATION_FAILURE",
+    "expected_root_cause": "AUTHENTICATION_FAILURE",
+    "logs": "INFO service=partner-api request_received=true\nWARN service=partner-api auth_header_present=true\nERROR service=partner-api status=401\nERROR service=partner-api message=\"invalid API key\" exception=AuthenticationError"
+  },
+  {
+    "case_id": "DBG-015",
+    "title": "Rejected service token signature",
+    "category": "AUTHENTICATION_FAILURE",
+    "expected_root_cause": "AUTHENTICATION_FAILURE",
+    "logs": "INFO service=orders token_received=true\nWARN service=orders token_validation=started\nERROR service=orders exception=InvalidSignatureError\nERROR service=orders message=\"JWT signature verification failed\" status=401"
+  }
+]
